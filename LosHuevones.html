@@ -1,0 +1,811 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Los Huevones">
+<meta name="theme-color" content="#0f0f0f">
+<title>Los Huevones</title>
+<style>
+  :root {
+    --bg: #0f0f0f;
+    --bg2: #1a1a1a;
+    --bg3: #242424;
+    --card: #1e1e1e;
+    --border: #333;
+    --text: #f0f0f0;
+    --muted: #888;
+    --accent: #f5c518;
+    --accent2: #e6a800;
+    --green: #2ecc71;
+    --red: #e74c3c;
+    --blue: #3498db;
+    --radius: 14px;
+    --radius-sm: 8px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { background: var(--bg); color: var(--text); font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; min-height: 100vh; overflow-x: hidden; }
+
+  .screen { display: none; padding: 0 0 80px; min-height: 100vh; }
+  .screen.active { display: block; }
+
+  .header { background: var(--bg2); padding: 16px 20px 14px; border-bottom: 1px solid var(--border); display: flex; align-items: center; gap: 12px; position: sticky; top: 0; z-index: 10; }
+  .header h1 { font-size: 20px; font-weight: 700; letter-spacing: -0.5px; }
+  .header .subtitle { font-size: 12px; color: var(--muted); }
+  .back-btn { background: var(--bg3); border: none; color: var(--text); font-size: 22px; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .egg-icon { font-size: 28px; line-height: 1; }
+
+  .home-grid { padding: 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .home-btn { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px 16px; cursor: pointer; text-align: center; transition: background 0.15s, transform 0.1s; display: flex; flex-direction: column; align-items: center; gap: 8px; min-height: 100px; }
+  .home-btn:active { transform: scale(0.97); background: var(--bg3); }
+  .home-btn.accent { background: var(--accent); border-color: var(--accent2); color: #000; }
+  .home-btn.accent:active { background: var(--accent2); }
+  .home-btn.full { grid-column: 1 / -1; }
+  .home-btn .icon { font-size: 30px; }
+  .home-btn .label { font-size: 15px; font-weight: 600; }
+  .home-btn .desc { font-size: 12px; color: var(--muted); }
+  .home-btn.accent .desc { color: #333; }
+
+  .section { padding: 20px; }
+  .label { font-size: 13px; color: var(--muted); margin-bottom: 8px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; }
+
+  .product-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+  .prod-btn { background: var(--card); border: 2px solid var(--border); border-radius: var(--radius-sm); padding: 14px 10px; cursor: pointer; text-align: center; transition: all 0.15s; }
+  .prod-btn:active { transform: scale(0.97); }
+  .prod-btn.selected { border-color: var(--accent); background: #2a2400; }
+  .prod-btn .pname { font-size: 14px; font-weight: 600; color: var(--text); }
+  .prod-btn .pcost { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+  .unit-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+  .unit-btn { background: var(--card); border: 2px solid var(--border); border-radius: var(--radius-sm); padding: 16px; cursor: pointer; text-align: center; font-size: 16px; font-weight: 600; color: var(--text); transition: all 0.15s; }
+  .unit-btn.selected { border-color: var(--accent); background: #2a2400; }
+
+  .qty-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 10px; }
+  .qty-btn { background: var(--card); border: 2px solid var(--border); border-radius: var(--radius-sm); padding: 14px 6px; cursor: pointer; text-align: center; font-size: 15px; font-weight: 700; color: var(--text); transition: all 0.15s; }
+  .qty-btn.selected { border-color: var(--accent); background: #2a2400; }
+
+  .input-field { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius-sm); color: var(--text); font-size: 18px; padding: 14px 16px; width: 100%; outline: none; transition: border-color 0.15s; }
+  .input-field:focus { border-color: var(--accent); }
+  .input-field::placeholder { color: var(--muted); }
+
+  .pay-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+  .pay-btn { background: var(--card); border: 2px solid var(--border); border-radius: var(--radius-sm); padding: 16px; cursor: pointer; text-align: center; font-size: 15px; font-weight: 600; color: var(--text); transition: all 0.15s; }
+  .pay-btn.selected { border-color: var(--accent); background: #2a2400; color: var(--accent); }
+
+  .summary-card { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; margin-bottom: 20px; }
+  .summary-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); }
+  .summary-row:last-child { border-bottom: none; }
+  .summary-row .sk { font-size: 14px; color: var(--muted); }
+  .summary-row .sv { font-size: 14px; font-weight: 600; }
+  .summary-row.big .sv { font-size: 20px; color: var(--accent); }
+  .summary-row.profit .sv { color: var(--green); }
+
+  .btn-primary { background: var(--accent); color: #000; border: none; border-radius: var(--radius); padding: 18px; font-size: 18px; font-weight: 700; width: 100%; cursor: pointer; transition: background 0.15s, transform 0.1s; }
+  .btn-primary:active { transform: scale(0.98); background: var(--accent2); }
+  .btn-secondary { background: var(--bg3); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; font-size: 16px; font-weight: 600; width: 100%; cursor: pointer; transition: all 0.15s; margin-top: 10px; }
+  .btn-secondary:active { transform: scale(0.98); }
+
+  .success-screen { text-align: center; padding: 60px 30px; }
+  .success-icon { font-size: 70px; margin-bottom: 20px; }
+  .success-id { font-size: 14px; color: var(--muted); font-family: monospace; background: var(--bg3); padding: 10px 16px; border-radius: var(--radius-sm); display: inline-block; margin: 10px 0; }
+  .success-details { color: var(--green); font-size: 24px; font-weight: 700; margin: 8px 0; }
+
+  .history-item { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 14px 16px; margin-bottom: 10px; cursor: pointer; transition: background 0.15s; }
+  .history-item:active { background: var(--bg3); }
+  .hi-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 6px; }
+  .hi-product { font-weight: 600; font-size: 15px; }
+  .hi-total { font-size: 16px; font-weight: 700; color: var(--accent); }
+  .hi-meta { font-size: 12px; color: var(--muted); }
+  .hi-profit { font-size: 12px; color: var(--green); }
+  .badge { display: inline-block; padding: 3px 8px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+  .badge-cash { background: #1a3a1a; color: var(--green); }
+  .badge-transfer { background: #1a2a3a; color: var(--blue); }
+
+  .report-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px; margin-bottom: 12px; }
+  .report-card h3 { font-size: 14px; color: var(--muted); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+  .report-stat { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); }
+  .report-stat:last-child { border-bottom: none; }
+  .report-stat .rk { font-size: 14px; color: var(--muted); }
+  .report-stat .rv { font-size: 15px; font-weight: 600; }
+  .report-stat .rv.green { color: var(--green); }
+  .report-stat .rv.yellow { color: var(--accent); }
+
+  .date-filters { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 20px; }
+  .filter-btn { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 8px; cursor: pointer; font-size: 14px; font-weight: 600; color: var(--text); text-align: center; transition: all 0.15s; }
+  .filter-btn.active { background: var(--accent); color: #000; border-color: var(--accent); }
+
+  .voice-area { background: var(--bg3); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 20px; text-align: center; }
+  .mic-btn { background: var(--red); border: none; color: white; font-size: 40px; width: 80px; height: 80px; border-radius: 50%; cursor: pointer; margin: 20px auto; display: block; transition: transform 0.1s; }
+  .mic-btn:active { transform: scale(0.95); }
+  .mic-btn.listening { animation: pulse 1s infinite; }
+  @keyframes pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(231,76,60,0.4); } 50% { box-shadow: 0 0 0 20px rgba(231,76,60,0); } }
+
+  .edit-indicator { background: #1a2a1a; border: 1px solid #2d5a2d; border-radius: var(--radius-sm); padding: 10px 14px; margin-bottom: 16px; font-size: 13px; color: var(--green); }
+
+  .empty-state { text-align: center; padding: 60px 20px; color: var(--muted); }
+  .empty-state .icon { font-size: 50px; margin-bottom: 16px; }
+
+  .toast { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%); background: var(--green); color: white; padding: 12px 24px; border-radius: 30px; font-weight: 600; font-size: 14px; z-index: 1000; animation: fadeInOut 2.5s forwards; pointer-events: none; white-space: nowrap; }
+  @keyframes fadeInOut { 0% { opacity:0; transform: translateX(-50%) translateY(20px); } 15%,75% { opacity:1; transform: translateX(-50%) translateY(0); } 100% { opacity:0; transform: translateX(-50%) translateY(-10px); } }
+
+  .mb-16 { margin-bottom: 16px; }
+  .mb-20 { margin-bottom: 20px; }
+
+  .install-banner { background: #1a2400; border: 1px solid var(--accent); border-radius: var(--radius-sm); padding: 12px 16px; margin: 0 20px 16px; font-size: 13px; color: var(--accent); display: none; }
+</style>
+</head>
+<body>
+
+<!-- HOME -->
+<div id="screen-home" class="screen active">
+  <div class="header">
+    <div class="egg-icon">🥚</div>
+    <div>
+      <h1 style="font-size:22px;">Los Huevones</h1>
+      <div class="subtitle" id="today-date"></div>
+    </div>
+  </div>
+  <div id="install-banner" class="install-banner">
+    📲 Para guardar en pantalla de inicio: Compartir → Agregar a pantalla de inicio
+  </div>
+  <div class="home-grid">
+    <button class="home-btn accent full" onclick="go('nueva-venta')">
+      <div class="icon">➕</div>
+      <div class="label">Nueva Venta</div>
+    </button>
+    <button class="home-btn" onclick="go('venta-rapida')">
+      <div class="icon">⚡</div>
+      <div class="label">Venta Rápida</div>
+      <div class="desc">3 toques</div>
+    </button>
+    <button class="home-btn" onclick="go('dictar')">
+      <div class="icon">🎙️</div>
+      <div class="label">Dictar Venta</div>
+      <div class="desc">Por voz</div>
+    </button>
+    <button class="home-btn" onclick="go('cierre')">
+      <div class="icon">📊</div>
+      <div class="label">Ver Cierre</div>
+      <div class="desc">Reportes</div>
+    </button>
+    <button class="home-btn" onclick="go('historial')">
+      <div class="icon">📋</div>
+      <div class="label">Historial</div>
+      <div class="desc">Todas las ventas</div>
+    </button>
+    <button class="home-btn full" onclick="go('config')">
+      <div class="icon">⚙️</div>
+      <div class="label">Configuración</div>
+      <div class="desc">Google Sheets y precios</div>
+    </button>
+  </div>
+  <div style="padding: 0 20px 20px;">
+    <div id="home-stats" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"></div>
+  </div>
+</div>
+
+<!-- NUEVA / VENTA RÁPIDA -->
+<div id="screen-nueva-venta" class="screen">
+  <div class="header">
+    <button class="back-btn" onclick="back()">←</button>
+    <div><h1 id="venta-title">Nueva Venta</h1></div>
+  </div>
+  <div id="step-producto" class="section">
+    <div class="label">1. Producto</div>
+    <div class="product-grid" id="product-grid"></div>
+    <div class="label">2. Unidad</div>
+    <div class="unit-row">
+      <button class="unit-btn" id="unit-maple" onclick="selectUnit('maple')">🍁 Maple</button>
+      <button class="unit-btn" id="unit-cajon" onclick="selectUnit('cajon')">📦 Cajón</button>
+    </div>
+    <div class="label">3. Cantidad</div>
+    <div class="qty-row">
+      <button class="qty-btn" onclick="selectQty(1,this)">1</button>
+      <button class="qty-btn" onclick="selectQty(2,this)">2</button>
+      <button class="qty-btn" onclick="selectQty(4,this)">4</button>
+      <button class="qty-btn" onclick="selectQty(12,this)">12</button>
+    </div>
+    <input type="number" class="input-field mb-16" id="qty-custom" placeholder="Otra cantidad..." min="1" oninput="onQtyInput(this.value)">
+
+    <div class="label">4. Precio total cobrado</div>
+    <input type="number" class="input-field mb-20" id="price-input" placeholder="$0" oninput="updatePreview()">
+
+    <div class="label">5. Medio de pago</div>
+    <div class="pay-row">
+      <button class="pay-btn" id="pay-efectivo" onclick="selectPay('efectivo')">💵 Efectivo</button>
+      <button class="pay-btn" id="pay-transferencia" onclick="selectPay('transferencia')">📱 Transferencia</button>
+    </div>
+
+    <div class="label">6. Cliente (opcional)</div>
+    <input type="text" class="input-field mb-16" id="client-input" placeholder="Consumidor final">
+
+    <div class="label">Nota (opcional)</div>
+    <input type="text" class="input-field mb-20" id="note-input" placeholder="Ej: pagar la semana que viene">
+
+    <div id="sale-preview" style="display:none;">
+      <div class="label">Resumen</div>
+      <div class="summary-card">
+        <div class="summary-row big"><span class="sk">Total venta</span><span class="sv" id="prev-total">-</span></div>
+        <div class="summary-row"><span class="sk">Costo</span><span class="sv" id="prev-cost">-</span></div>
+        <div class="summary-row profit"><span class="sk">Ganancia</span><span class="sv" id="prev-profit">-</span></div>
+        <div class="summary-row"><span class="sk">Margen</span><span class="sv" id="prev-margin">-</span></div>
+      </div>
+    </div>
+
+    <button class="btn-primary" onclick="confirmarVenta()">Guardar Venta ✓</button>
+  </div>
+</div>
+
+<!-- DICTADO -->
+<div id="screen-dictar" class="screen">
+  <div class="header">
+    <button class="back-btn" onclick="back()">←</button>
+    <div><h1>Dictar Venta</h1></div>
+  </div>
+  <div class="section">
+    <div class="voice-area">
+      <p style="color:var(--muted);font-size:14px;">Di algo como:<br><em>"2 maples de huevo número 2, efectivo, cliente María, total 12000"</em></p>
+      <button class="mic-btn" id="mic-btn" onclick="toggleVoice()">🎙️</button>
+      <p id="voice-status" style="font-size:14px;color:var(--muted);">Toca el micrófono para hablar</p>
+    </div>
+    <div id="voice-result" style="display:none;">
+      <div class="label">Interpretado — confirmá y editá si hace falta</div>
+      <div id="voice-edit-form"></div>
+      <button class="btn-primary" onclick="guardarDictado()">Confirmar y guardar</button>
+      <button class="btn-secondary" onclick="resetVoice()">Dictar de nuevo</button>
+    </div>
+  </div>
+</div>
+
+<!-- HISTORIAL -->
+<div id="screen-historial" class="screen">
+  <div class="header">
+    <button class="back-btn" onclick="back()">←</button>
+    <div><h1>Historial</h1></div>
+  </div>
+  <div class="section">
+    <input type="text" class="input-field mb-16" id="search-input" placeholder="Buscar por cliente o producto..." oninput="renderHistorial()">
+    <div id="historial-list"></div>
+  </div>
+</div>
+
+<!-- EDITAR VENTA -->
+<div id="screen-editar" class="screen">
+  <div class="header">
+    <button class="back-btn" onclick="back()">←</button>
+    <div><h1>Editar Venta</h1></div>
+  </div>
+  <div class="section">
+    <div class="edit-indicator" id="edit-id-display">Editando: —</div>
+    <div class="label">Producto</div>
+    <div class="product-grid" id="edit-product-grid"></div>
+    <div class="label">Unidad</div>
+    <div class="unit-row">
+      <button class="unit-btn" id="edit-unit-maple" onclick="editSelectUnit('maple')">🍁 Maple</button>
+      <button class="unit-btn" id="edit-unit-cajon" onclick="editSelectUnit('cajon')">📦 Cajón</button>
+    </div>
+    <div class="label">Cantidad</div>
+    <input type="number" class="input-field mb-16" id="edit-qty" min="1">
+    <div class="label">Precio total cobrado</div>
+    <input type="number" class="input-field mb-16" id="edit-price">
+    <div class="label">Medio de pago</div>
+    <div class="pay-row">
+      <button class="pay-btn" id="edit-pay-efectivo" onclick="editSelectPay('efectivo')">💵 Efectivo</button>
+      <button class="pay-btn" id="edit-pay-transferencia" onclick="editSelectPay('transferencia')">📱 Transferencia</button>
+    </div>
+    <div class="label">Cliente</div>
+    <input type="text" class="input-field mb-16" id="edit-client">
+    <div class="label">Nota</div>
+    <input type="text" class="input-field mb-16" id="edit-note">
+    <div class="label">Nota de edición</div>
+    <input type="text" class="input-field mb-20" id="edit-change-note" placeholder="¿Qué cambió?">
+    <button class="btn-primary" onclick="guardarEdicion()">Guardar cambios</button>
+    <button class="btn-secondary" style="color:var(--red);border-color:var(--red);" onclick="eliminarVenta()">Eliminar venta</button>
+  </div>
+</div>
+
+<!-- CIERRE -->
+<div id="screen-cierre" class="screen">
+  <div class="header">
+    <button class="back-btn" onclick="back()">←</button>
+    <div><h1>Cierre</h1></div>
+  </div>
+  <div class="section">
+    <div class="date-filters">
+      <button class="filter-btn active" id="filter-hoy" onclick="setFilter('hoy')">Hoy</button>
+      <button class="filter-btn" id="filter-semana" onclick="setFilter('semana')">Semana</button>
+      <button class="filter-btn" id="filter-custom" onclick="setFilter('custom')">Rango</button>
+    </div>
+    <div id="custom-range" style="display:none;margin-bottom:16px;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+        <div><div class="label">Desde</div><input type="date" class="input-field" id="range-from" onchange="renderCierre()"></div>
+        <div><div class="label">Hasta</div><input type="date" class="input-field" id="range-to" onchange="renderCierre()"></div>
+      </div>
+    </div>
+    <div id="cierre-content"></div>
+  </div>
+</div>
+
+<!-- CONFIG -->
+<div id="screen-config" class="screen">
+  <div class="header">
+    <button class="back-btn" onclick="back()">←</button>
+    <div><h1>Configuración</h1></div>
+  </div>
+  <div class="section">
+    <div class="label">Google Apps Script URL</div>
+    <input type="text" class="input-field mb-16" id="apps-script-url" placeholder="https://script.google.com/macros/s/..." oninput="saveConfig()">
+    <div class="label">Precios por cajón</div>
+    <div id="price-editor"></div>
+    <button class="btn-primary" onclick="saveConfig(); showToast('Configuración guardada ✓')">Guardar configuración</button>
+
+    <div style="margin-top:24px;">
+      <div class="label">Agregar a pantalla de inicio</div>
+      <div class="report-card">
+        <div style="font-size:13px;color:var(--muted);line-height:1.8;">
+          <strong style="color:var(--text);">iPhone / Safari:</strong><br>
+          Compartir (□↑) → Agregar a pantalla de inicio<br><br>
+          <strong style="color:var(--text);">Android / Chrome:</strong><br>
+          Menú (⋮) → Agregar a pantalla de inicio
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:8px;">
+      <div class="label">Datos</div>
+      <button class="btn-secondary" onclick="exportarDatos()">Exportar ventas (JSON)</button>
+      <button class="btn-secondary" style="margin-top:8px;color:var(--red);border-color:var(--red);" onclick="borrarTodo()">Borrar todos los datos</button>
+    </div>
+  </div>
+</div>
+
+<!-- ÉXITO -->
+<div id="screen-success" class="screen">
+  <div class="success-screen">
+    <div class="success-icon">🎉</div>
+    <h2 style="font-size:22px;margin-bottom:10px;">¡Venta registrada!</h2>
+    <div class="success-id" id="success-id">HUEV-2026-05-31-001</div>
+    <div class="success-details" id="success-profit">+$0 ganancia</div>
+    <p style="color:var(--muted);font-size:14px;margin:12px 0 30px;" id="success-detail"></p>
+    <div id="sync-status" style="font-size:13px;color:var(--muted);margin-bottom:20px;"></div>
+    <button class="btn-primary" onclick="go('nueva-venta')">Nueva venta ➕</button>
+    <button class="btn-secondary" onclick="go('home')">Volver al inicio</button>
+  </div>
+</div>
+
+<script>
+const PRODUCTS = [
+  { id:'n1', name:'Huevo N°1', cost:50000 },
+  { id:'n2', name:'Huevo N°2', cost:40000 },
+  { id:'n3', name:'Huevo N°3', cost:35000 },
+  { id:'su', name:'Súper', cost:58000 },
+  { id:'dy', name:'Doble Yema', cost:60000 },
+  { id:'c2', name:'Color N°2', cost:43000 },
+  { id:'c1', name:'Color N°1', cost:53000 },
+];
+
+let state = { product:null, unit:null, qty:null, price:null, pay:null, client:'', note:'' };
+let editState = { id:null, product:null, unit:null, pay:null };
+let currentFilter = 'hoy';
+let screenStack = ['home'];
+let recognition = null;
+let isListening = false;
+
+function loadSales() { try { return JSON.parse(localStorage.getItem('huevones_sales')||'[]'); } catch { return []; } }
+function saveSales(s) { localStorage.setItem('huevones_sales', JSON.stringify(s)); }
+function loadConfig() { try { return JSON.parse(localStorage.getItem('huevones_config')||'{}'); } catch { return {}; } }
+function saveConfigData(c) { localStorage.setItem('huevones_config', JSON.stringify(c)); }
+
+function fmt(n) { return '$' + Math.round(n).toLocaleString('es-AR'); }
+function fmtPct(n) { return parseFloat(n).toFixed(1) + '%'; }
+function todayStr() { return new Date().toISOString().split('T')[0]; }
+
+function genId() {
+  const today = todayStr();
+  const sales = loadSales();
+  const todaySales = sales.filter(s => s.fecha === today);
+  const num = String(todaySales.length + 1).padStart(3, '0');
+  return `HUEV-${today}-${num}`;
+}
+
+function calcCost(productId, unit, qty) {
+  const cfg = loadConfig();
+  const prod = PRODUCTS.find(p => p.id === productId);
+  const cajonCost = (cfg.prices && cfg.prices[productId]) ? cfg.prices[productId] : prod.cost;
+  const mapleCost = cajonCost / 12;
+  return unit === 'cajon' ? cajonCost * qty : mapleCost * qty;
+}
+
+function calcSale(productId, unit, qty, price) {
+  const cost = calcCost(productId, unit, qty);
+  const profit = price - cost;
+  const margin = price > 0 ? (profit / price * 100) : 0;
+  return { cost, profit, margin };
+}
+
+function go(screen) {
+  screenStack.push(screen);
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById('screen-'+screen).classList.add('active');
+  window.scrollTo(0,0);
+  if (screen === 'historial') renderHistorial();
+  if (screen === 'cierre') renderCierre();
+  if (screen === 'home') renderHomeStats();
+  if (screen === 'config') renderConfig();
+  if (screen === 'nueva-venta' || screen === 'venta-rapida') {
+    document.getElementById('venta-title').textContent = screen === 'venta-rapida' ? 'Venta Rápida' : 'Nueva Venta';
+    resetForm();
+  }
+}
+
+function back() {
+  if (screenStack.length > 1) {
+    screenStack.pop();
+    const prev = screenStack[screenStack.length-1];
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById('screen-'+prev).classList.add('active');
+    window.scrollTo(0,0);
+    if (prev === 'historial') renderHistorial();
+    if (prev === 'home') renderHomeStats();
+    if (prev === 'cierre') renderCierre();
+  }
+}
+
+function renderProductGrid(containerId, selectFn, selectedId) {
+  const cfg = loadConfig();
+  const el = document.getElementById(containerId);
+  if (!el) return;
+  el.innerHTML = PRODUCTS.map(p => {
+    const cost = (cfg.prices && cfg.prices[p.id]) ? cfg.prices[p.id] : p.cost;
+    return `<button class="prod-btn ${selectedId===p.id?'selected':''}" onclick="${selectFn}('${p.id}')">
+      <div class="pname">${p.name}</div>
+      <div class="pcost">${fmt(cost)}/cajón</div>
+    </button>`;
+  }).join('');
+}
+
+function resetForm() {
+  state = { product:null, unit:null, qty:null, price:null, pay:null, client:'', note:'' };
+  renderProductGrid('product-grid', 'selectProduct', null);
+  document.querySelectorAll('#step-producto .unit-btn').forEach(b => b.classList.remove('selected'));
+  document.querySelectorAll('#step-producto .qty-btn').forEach(b => b.classList.remove('selected'));
+  const qc = document.getElementById('qty-custom'); if(qc) qc.value='';
+  const pi = document.getElementById('price-input'); if(pi) pi.value='';
+  const ci = document.getElementById('client-input'); if(ci) ci.value='';
+  const ni = document.getElementById('note-input'); if(ni) ni.value='';
+  const sp = document.getElementById('sale-preview'); if(sp) sp.style.display='none';
+}
+
+function selectProduct(id) { state.product=id; renderProductGrid('product-grid','selectProduct',id); updatePreview(); }
+function selectUnit(u) { state.unit=u; document.getElementById('unit-maple').classList.toggle('selected',u==='maple'); document.getElementById('unit-cajon').classList.toggle('selected',u==='cajon'); updatePreview(); }
+function selectQty(q, btn) {
+  state.qty=q;
+  document.querySelectorAll('#step-producto .qty-btn').forEach(b=>b.classList.remove('selected'));
+  if(btn) btn.classList.add('selected');
+  document.getElementById('qty-custom').value='';
+  updatePreview();
+}
+function onQtyInput(v) { if(v){state.qty=parseFloat(v); document.querySelectorAll('#step-producto .qty-btn').forEach(b=>b.classList.remove('selected'));} updatePreview(); }
+function selectPay(p) { state.pay=p; document.getElementById('pay-efectivo').classList.toggle('selected',p==='efectivo'); document.getElementById('pay-transferencia').classList.toggle('selected',p==='transferencia'); }
+
+function updatePreview() {
+  state.price = parseFloat(document.getElementById('price-input').value)||null;
+  if (state.product && state.unit && state.qty && state.price) {
+    const {cost,profit,margin} = calcSale(state.product,state.unit,state.qty,state.price);
+    document.getElementById('prev-total').textContent = fmt(state.price);
+    document.getElementById('prev-cost').textContent = fmt(cost);
+    document.getElementById('prev-profit').textContent = fmt(profit);
+    document.getElementById('prev-margin').textContent = fmtPct(margin);
+    document.getElementById('sale-preview').style.display='block';
+  }
+}
+
+function confirmarVenta() {
+  state.price = parseFloat(document.getElementById('price-input').value)||null;
+  state.client = document.getElementById('client-input').value.trim()||'Consumidor final';
+  state.note = document.getElementById('note-input').value.trim();
+  if (!state.product) { showToast('Elegí un producto',true); return; }
+  if (!state.unit) { showToast('Elegí la unidad',true); return; }
+  if (!state.qty) { showToast('Ingresá la cantidad',true); return; }
+  if (!state.price) { showToast('Ingresá el precio',true); return; }
+  if (!state.pay) { showToast('Elegí el medio de pago',true); return; }
+  guardarYMostrarExito(state.product, state.unit, state.qty, state.price, state.pay, state.client, state.note);
+}
+
+function guardarYMostrarExito(productId, unit, qty, price, pay, client, note) {
+  const id = genId();
+  const now = new Date();
+  const {cost,profit,margin} = calcSale(productId,unit,qty,price);
+  const prod = PRODUCTS.find(p=>p.id===productId);
+  const sale = {
+    id, fecha:todayStr(), hora:now.toTimeString().slice(0,5),
+    producto:prod.name, productoId:productId,
+    unidad:unit, cantidad:qty,
+    precioFinal:price, totalVenta:price,
+    costoTotal:cost, gananciaBruta:profit, margen:margin,
+    pago:pay, cliente:client||'Consumidor final', nota:note||'',
+    estado:'activa', fechaEdicion:null, notaEdicion:null, cambio:null
+  };
+  const sales = loadSales(); sales.push(sale); saveSales(sales);
+
+  document.getElementById('success-id').textContent = id;
+  document.getElementById('success-profit').textContent = '+' + fmt(profit) + ' ganancia';
+  document.getElementById('success-detail').textContent = `${prod.name} · ${qty} ${unit==='maple'?'maple(s)':'cajón(es)'} · ${fmt(price)} · ${pay}`;
+  document.getElementById('sync-status').textContent = '';
+
+  screenStack.push('success');
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-success').classList.add('active');
+  window.scrollTo(0,0);
+
+  sincronizarSheets(sale).then(ok => {
+    const el = document.getElementById('sync-status');
+    if (el) el.textContent = ok ? '✓ Guardado en Google Sheets' : '⚠️ Sin conexión — guardado solo en el celular';
+    if (el) el.style.color = ok ? 'var(--green)' : 'var(--accent)';
+  });
+}
+
+function renderHistorial() {
+  const search = (document.getElementById('search-input')||{}).value||'';
+  const sl = search.toLowerCase();
+  const sales = loadSales().filter(s=>!sl||s.cliente.toLowerCase().includes(sl)||s.producto.toLowerCase().includes(sl)).reverse();
+  const el = document.getElementById('historial-list');
+  if (!sales.length) { el.innerHTML='<div class="empty-state"><div class="icon">🥚</div><p>Sin ventas todavía</p></div>'; return; }
+  el.innerHTML = sales.map(s=>`
+    <div class="history-item" onclick="abrirEdicion('${s.id}')">
+      <div class="hi-top"><div class="hi-product">${s.producto}</div><div class="hi-total">${fmt(s.totalVenta)}</div></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;">
+        <div class="hi-meta">${s.fecha} ${s.hora} · ${s.cantidad} ${s.unidad} · ${s.cliente}</div>
+        <span class="badge ${s.pago==='efectivo'?'badge-cash':'badge-transfer'}">${s.pago}</span>
+      </div>
+      <div class="hi-profit">Ganancia: ${fmt(s.gananciaBruta)} (${fmtPct(s.margen)})</div>
+    </div>`).join('');
+}
+
+function abrirEdicion(id) {
+  const sale = loadSales().find(s=>s.id===id);
+  if (!sale) return;
+  editState = { id, product:sale.productoId, unit:sale.unidad, pay:sale.pago };
+  document.getElementById('edit-id-display').textContent = 'Editando: ' + id;
+  renderProductGrid('edit-product-grid','editSelectProduct',sale.productoId);
+  document.getElementById('edit-unit-maple').classList.toggle('selected',sale.unidad==='maple');
+  document.getElementById('edit-unit-cajon').classList.toggle('selected',sale.unidad==='cajon');
+  document.getElementById('edit-qty').value = sale.cantidad;
+  document.getElementById('edit-price').value = sale.precioFinal;
+  document.getElementById('edit-pay-efectivo').classList.toggle('selected',sale.pago==='efectivo');
+  document.getElementById('edit-pay-transferencia').classList.toggle('selected',sale.pago==='transferencia');
+  document.getElementById('edit-client').value = sale.cliente;
+  document.getElementById('edit-note').value = sale.nota||'';
+  document.getElementById('edit-change-note').value = '';
+  go('editar');
+}
+
+function editSelectProduct(id) { editState.product=id; renderProductGrid('edit-product-grid','editSelectProduct',id); }
+function editSelectUnit(u) { editState.unit=u; document.getElementById('edit-unit-maple').classList.toggle('selected',u==='maple'); document.getElementById('edit-unit-cajon').classList.toggle('selected',u==='cajon'); }
+function editSelectPay(p) { editState.pay=p; document.getElementById('edit-pay-efectivo').classList.toggle('selected',p==='efectivo'); document.getElementById('edit-pay-transferencia').classList.toggle('selected',p==='transferencia'); }
+
+function guardarEdicion() {
+  const qty = parseFloat(document.getElementById('edit-qty').value);
+  const price = parseFloat(document.getElementById('edit-price').value);
+  const client = document.getElementById('edit-client').value.trim()||'Consumidor final';
+  const note = document.getElementById('edit-note').value.trim();
+  const changeNote = document.getElementById('edit-change-note').value.trim();
+  if (!editState.product||!editState.unit||!qty||!price||!editState.pay) { showToast('Completá todos los campos',true); return; }
+  const {cost,profit,margin} = calcSale(editState.product,editState.unit,qty,price);
+  const prod = PRODUCTS.find(p=>p.id===editState.product);
+  const sales = loadSales();
+  const idx = sales.findIndex(s=>s.id===editState.id);
+  if (idx<0) return;
+  const orig = sales[idx];
+  sales[idx] = { ...orig, producto:prod.name, productoId:editState.product, unidad:editState.unit, cantidad:qty, precioFinal:price, totalVenta:price, costoTotal:cost, gananciaBruta:profit, margen:margin, pago:editState.pay, cliente:client, nota:note, fechaEdicion:new Date().toISOString().slice(0,16).replace('T',' '), notaEdicion:changeNote, cambio:`${orig.totalVenta}→${price}` };
+  saveSales(sales);
+  sincronizarSheets(sales[idx]);
+  showToast('Venta actualizada ✓');
+  back();
+}
+
+function eliminarVenta() {
+  if (!confirm('¿Eliminar esta venta?')) return;
+  saveSales(loadSales().filter(s=>s.id!==editState.id));
+  showToast('Venta eliminada');
+  back();
+}
+
+function setFilter(f) {
+  currentFilter=f;
+  document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('filter-'+f).classList.add('active');
+  document.getElementById('custom-range').style.display = f==='custom'?'block':'none';
+  renderCierre();
+}
+
+function getDateRange() {
+  const today = todayStr();
+  if (currentFilter==='hoy') return [today,today];
+  if (currentFilter==='semana') { const d=new Date(); d.setDate(d.getDate()-6); return [d.toISOString().split('T')[0],today]; }
+  return [document.getElementById('range-from').value||today, document.getElementById('range-to').value||today];
+}
+
+function renderCierre() {
+  const [from,to] = getDateRange();
+  const sales = loadSales().filter(s=>s.fecha>=from&&s.fecha<=to&&s.estado!=='cancelada');
+  const el = document.getElementById('cierre-content');
+  if (!sales.length) { el.innerHTML='<div class="empty-state"><div class="icon">📊</div><p>Sin ventas en este período</p></div>'; return; }
+  const totalFact=sales.reduce((a,s)=>a+s.totalVenta,0);
+  const totalCost=sales.reduce((a,s)=>a+s.costoTotal,0);
+  const totalProfit=sales.reduce((a,s)=>a+s.gananciaBruta,0);
+  const avgMargin=sales.reduce((a,s)=>a+s.margen,0)/sales.length;
+  const efectivo=sales.filter(s=>s.pago==='efectivo').reduce((a,s)=>a+s.totalVenta,0);
+  const transf=sales.filter(s=>s.pago==='transferencia').reduce((a,s)=>a+s.totalVenta,0);
+  const byProd={}; sales.forEach(s=>{byProd[s.producto]=(byProd[s.producto]||0)+s.totalVenta;});
+  const topProd=Object.entries(byProd).sort((a,b)=>b[1]-a[1]);
+  const byClient={}; sales.forEach(s=>{byClient[s.cliente]=(byClient[s.cliente]||0)+s.totalVenta;});
+  const topClient=Object.entries(byClient).sort((a,b)=>b[1]-a[1])[0];
+  el.innerHTML=`
+    <div class="report-card"><h3>Período: ${from} al ${to}</h3>
+      <div class="report-stat"><span class="rk">Ventas</span><span class="rv">${sales.length}</span></div>
+      <div class="report-stat"><span class="rk">Facturado</span><span class="rv yellow">${fmt(totalFact)}</span></div>
+      <div class="report-stat"><span class="rk">Costo</span><span class="rv">${fmt(totalCost)}</span></div>
+      <div class="report-stat"><span class="rk">Ganancia</span><span class="rv green">${fmt(totalProfit)}</span></div>
+      <div class="report-stat"><span class="rk">Margen promedio</span><span class="rv">${fmtPct(avgMargin)}</span></div>
+    </div>
+    <div class="report-card"><h3>Medios de pago</h3>
+      <div class="report-stat"><span class="rk">💵 Efectivo</span><span class="rv">${fmt(efectivo)}</span></div>
+      <div class="report-stat"><span class="rk">📱 Transferencia</span><span class="rv">${fmt(transf)}</span></div>
+    </div>
+    <div class="report-card"><h3>Por producto</h3>${topProd.map(([p,t])=>`<div class="report-stat"><span class="rk">${p}</span><span class="rv">${fmt(t)}</span></div>`).join('')}</div>
+    <div class="report-card"><h3>Top cliente</h3>
+      <div class="report-stat"><span class="rk">${topClient[0]}</span><span class="rv yellow">${fmt(topClient[1])}</span></div>
+    </div>`;
+}
+
+function renderHomeStats() {
+  const today = todayStr();
+  const sales = loadSales().filter(s=>s.fecha===today);
+  const totalHoy = sales.reduce((a,s)=>a+s.totalVenta,0);
+  const gananHoy = sales.reduce((a,s)=>a+s.gananciaBruta,0);
+  document.getElementById('home-stats').innerHTML = sales.length ? `
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;text-align:center;">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:4px;">Hoy · ventas</div>
+      <div style="font-size:22px;font-weight:700;color:var(--accent);">${sales.length}</div>
+    </div>
+    <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;text-align:center;">
+      <div style="font-size:12px;color:var(--muted);margin-bottom:4px;">Hoy · ganancia</div>
+      <div style="font-size:22px;font-weight:700;color:var(--green);">${fmt(gananHoy)}</div>
+    </div>` : '';
+  document.getElementById('today-date').textContent = new Date().toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'});
+  // Mostrar banner install si no está en modo standalone
+  if (!window.navigator.standalone && !window.matchMedia('(display-mode: standalone)').matches) {
+    document.getElementById('install-banner').style.display = 'block';
+  }
+}
+
+function renderConfig() {
+  const cfg = loadConfig();
+  document.getElementById('apps-script-url').value = cfg.appsScriptUrl||'';
+  const el = document.getElementById('price-editor');
+  el.innerHTML = PRODUCTS.map(p=>{
+    const v=(cfg.prices&&cfg.prices[p.id])?cfg.prices[p.id]:p.cost;
+    return `<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+      <span style="flex:1;font-size:14px;">${p.name}</span>
+      <input type="number" class="input-field" style="width:130px;" value="${v}" onchange="updatePrice('${p.id}',this.value)">
+    </div>`;
+  }).join('');
+}
+
+function updatePrice(id,val) {
+  const cfg=loadConfig(); if(!cfg.prices)cfg.prices={};
+  cfg.prices[id]=parseFloat(val)||0; saveConfigData(cfg);
+}
+
+function saveConfig() {
+  const cfg=loadConfig();
+  cfg.appsScriptUrl=document.getElementById('apps-script-url').value;
+  saveConfigData(cfg);
+}
+
+async function sincronizarSheets(sale) {
+  const cfg=loadConfig();
+  if (!cfg.appsScriptUrl) return false;
+  try {
+    const r = await fetch(cfg.appsScriptUrl, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({action:'addSale',sale}) });
+    const d = await r.json();
+    return d.ok;
+  } catch(e) { return false; }
+}
+
+function toggleVoice() {
+  if (!('webkitSpeechRecognition' in window||'SpeechRecognition' in window)) { showToast('Tu navegador no soporta dictado',true); return; }
+  if (isListening) { recognition&&recognition.stop(); return; }
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+  recognition=new SR(); recognition.lang='es-AR';
+  recognition.onstart=()=>{isListening=true;document.getElementById('mic-btn').classList.add('listening');document.getElementById('voice-status').textContent='Escuchando...';};
+  recognition.onend=()=>{isListening=false;document.getElementById('mic-btn').classList.remove('listening');document.getElementById('voice-status').textContent='Toca el micrófono para hablar';};
+  recognition.onresult=(e)=>{interpretarDictado(e.results[0][0].transcript);};
+  recognition.onerror=()=>{showToast('Error al escuchar, intentá de nuevo',true);};
+  recognition.start();
+}
+
+function interpretarDictado(texto) {
+  document.getElementById('voice-status').textContent='"'+texto+'"';
+  let r={product:null,unit:'maple',qty:1,pay:null,client:'',price:null};
+  const t=texto.toLowerCase();
+  PRODUCTS.forEach(p=>{
+    if(t.includes(p.name.toLowerCase())||(p.id==='n1'&&t.includes('número 1'))||(p.id==='n2'&&t.includes('número 2'))||(p.id==='n3'&&t.includes('número 3'))||(p.id==='su'&&t.includes('super'))||(p.id==='dy'&&t.includes('doble'))||(p.id==='c1'&&t.includes('color')&&t.includes('1'))||(p.id==='c2'&&t.includes('color')&&t.includes('2'))) r.product=p.id;
+  });
+  if(t.includes('cajón')||t.includes('cajon'))r.unit='cajon';
+  const nums=t.match(/(\d+)/g);
+  if(nums&&nums.length>0)r.qty=parseInt(nums[0]);
+  const totalM=t.match(/total\s+(\d[\d.]*)/);
+  if(totalM)r.price=parseFloat(totalM[1].replace('.',''));
+  else if(nums&&nums.length>1)r.price=parseFloat(nums[nums.length-1]);
+  if(t.includes('efectivo'))r.pay='efectivo';
+  if(t.includes('transfer'))r.pay='transferencia';
+  const clientM=t.match(/cliente\s+(\w+)/);
+  if(clientM)r.client=clientM[1];
+  mostrarFormDictado(r);
+}
+
+function mostrarFormDictado(r) {
+  const el=document.getElementById('voice-edit-form');
+  el.innerHTML=`
+    <div class="label">Producto</div><div class="product-grid" id="voice-prod-grid"></div>
+    <div class="label">Unidad</div>
+    <div class="unit-row">
+      <button class="unit-btn ${r.unit==='maple'?'selected':''}" id="v-unit-maple" onclick="voiceSetUnit('maple')">🍁 Maple</button>
+      <button class="unit-btn ${r.unit==='cajon'?'selected':''}" id="v-unit-cajon" onclick="voiceSetUnit('cajon')">📦 Cajón</button>
+    </div>
+    <div class="label">Cantidad</div><input type="number" class="input-field mb-16" id="v-qty" value="${r.qty||1}" min="1">
+    <div class="label">Precio total</div><input type="number" class="input-field mb-16" id="v-price" value="${r.price||''}">
+    <div class="label">Medio de pago</div>
+    <div class="pay-row">
+      <button class="pay-btn ${r.pay==='efectivo'?'selected':''}" id="v-pay-e" onclick="voiceSetPay('efectivo')">💵 Efectivo</button>
+      <button class="pay-btn ${r.pay==='transferencia'?'selected':''}" id="v-pay-t" onclick="voiceSetPay('transferencia')">📱 Transferencia</button>
+    </div>
+    <div class="label">Cliente</div><input type="text" class="input-field mb-20" id="v-client" value="${r.client||''}">`;
+  window._voiceState=r;
+  renderProductGrid('voice-prod-grid','voiceSetProd',r.product);
+  document.getElementById('voice-result').style.display='block';
+}
+
+function voiceSetProd(id){window._voiceState.product=id;renderProductGrid('voice-prod-grid','voiceSetProd',id);}
+function voiceSetUnit(u){window._voiceState.unit=u;document.getElementById('v-unit-maple').classList.toggle('selected',u==='maple');document.getElementById('v-unit-cajon').classList.toggle('selected',u==='cajon');}
+function voiceSetPay(p){window._voiceState.pay=p;document.getElementById('v-pay-e').classList.toggle('selected',p==='efectivo');document.getElementById('v-pay-t').classList.toggle('selected',p==='transferencia');}
+
+function guardarDictado() {
+  const vs=window._voiceState;
+  const qty=parseFloat(document.getElementById('v-qty').value);
+  const price=parseFloat(document.getElementById('v-price').value);
+  const client=document.getElementById('v-client').value.trim()||'Consumidor final';
+  if(!vs.pay){vs.pay=document.getElementById('v-pay-e').classList.contains('selected')?'efectivo':document.getElementById('v-pay-t').classList.contains('selected')?'transferencia':null;}
+  if(!vs.product||!vs.unit||!qty||!price||!vs.pay){showToast('Completá los datos faltantes',true);return;}
+  guardarYMostrarExito(vs.product,vs.unit,qty,price,vs.pay,client,'');
+}
+
+function resetVoice() { document.getElementById('voice-result').style.display='none'; document.getElementById('voice-status').textContent='Toca el micrófono para hablar'; }
+
+function exportarDatos() {
+  const data=JSON.stringify(loadSales(),null,2);
+  const blob=new Blob([data],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download=`huevones_${todayStr()}.json`; a.click();
+}
+
+function borrarTodo() {
+  if(confirm('¿Borrar TODAS las ventas del celular? (Google Sheets no se toca)')){
+    localStorage.removeItem('huevones_sales'); showToast('Datos borrados'); renderHomeStats();
+  }
+}
+
+function showToast(msg,isError=false) {
+  const t=document.createElement('div'); t.className='toast';
+  t.style.background=isError?'#e74c3c':'#2ecc71'; t.textContent=msg;
+  document.body.appendChild(t); setTimeout(()=>t.remove(),2600);
+}
+
+renderHomeStats();
+</script>
+</body>
+</html>
