@@ -707,13 +707,26 @@ function saveConfig() {
 }
 
 async function sincronizarSheets(sale) {
-  const cfg=loadConfig();
+  const cfg = loadConfig();
   if (!cfg.appsScriptUrl) return false;
+
   try {
-    const r = await fetch(cfg.appsScriptUrl, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({action:'addSale',sale}) });
-    const d = await r.json();
-    return d.ok;
-  } catch(e) { return false; }
+    await fetch(cfg.appsScriptUrl, {
+      method: "POST",
+      mode: "no-cors",
+      headers: {
+        "Content-Type": "text/plain;charset=utf-8"
+      },
+      body: JSON.stringify({
+        action: "addSale",
+        sale: sale
+      })
+    });
+
+    return true;
+  } catch (e) {
+    return false;
+  }
 }
 
 function toggleVoice() {
